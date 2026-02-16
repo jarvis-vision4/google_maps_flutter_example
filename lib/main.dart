@@ -2,11 +2,10 @@ import 'dart:async';
 import 'dart:developer';
 import 'dart:ui' as ui;
 
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
-import 'dart:typed_data';
+
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 void main() {
@@ -53,9 +52,9 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final Completer<GoogleMapController> _controller =
-  Completer<GoogleMapController>();
+      Completer<GoogleMapController>();
   static const CameraPosition _kinitial = CameraPosition(
-    target: LatLng(16.8565435,96.1208935),
+    target: LatLng(16.8565435, 96.1208935),
     zoom: 13,
   );
 
@@ -63,26 +62,29 @@ class _MyHomePageState extends State<MyHomePage> {
     bearing: 192.8334901395799,
     target: LatLng(37.43296265331129, -122.08832357078792),
     tilt: 59.440717697143555,
-    zoom:14,
+    zoom: 14,
   );
   Future<Uint8List> getBytesFromAsset(String path, int width) async {
     ByteData data = await rootBundle.load(path);
-    ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
-        targetWidth: width);
+    ui.Codec codec = await ui.instantiateImageCodec(
+      data.buffer.asUint8List(),
+      targetWidth: width,
+    );
     ui.FrameInfo fi = await codec.getNextFrame();
-    return (await fi.image.toByteData(format: ui.ImageByteFormat.png))!
-        .buffer
-        .asUint8List();
+    return (await fi.image.toByteData(
+      format: ui.ImageByteFormat.png,
+    ))!.buffer.asUint8List();
   }
-  Set<Marker> markers={};
-  Future<Position> _determinePosition()async{
+
+  Set<Marker> markers = {};
+  Future<Position> _determinePosition() async {
     bool serviceEnabled;
     LocationPermission permission;
-    serviceEnabled=await Geolocator.isLocationServiceEnabled();
-    if(!serviceEnabled){
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
       return Future.error("Location services are disabled.");
     }
-    permission=await Geolocator.checkPermission();
+    permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
@@ -92,29 +94,31 @@ class _MyHomePageState extends State<MyHomePage> {
     if (permission == LocationPermission.deniedForever) {
       // Permissions are denied forever, handle appropriately.
       return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
+        'Location permissions are permanently denied, we cannot request permissions.',
+      );
     }
 
     // When we reach here, permissions are granted and we can
     // continue accessing the position of the device.
-    final Position currentPosition= await Geolocator.getCurrentPosition();
+    final Position currentPosition = await Geolocator.getCurrentPosition();
     return currentPosition;
   }
-  void loadMarker()async{
-    final Uint8List markerIcon = await getBytesFromAsset('assets/store.png', 50);
-    final Marker marker=Marker(
-        icon: BitmapDescriptor.bytes(markerIcon),
-        markerId: MarkerId("1"),
-        position: LatLng(16.8565435,96.1208935),
-        infoWindow: InfoWindow(
-          title: "Shop 1",
-          snippet: "Shop 1 snippet"
-        )
+
+  void loadMarker() async {
+    final Uint8List markerIcon = await getBytesFromAsset(
+      'assets/store.png',
+      50,
+    );
+    final Marker marker = Marker(
+      icon: BitmapDescriptor.bytes(markerIcon),
+      markerId: MarkerId("1"),
+      position: LatLng(16.8565435, 96.1208935),
+      infoWindow: InfoWindow(title: "Shop 1", snippet: "Shop 1 snippet"),
     );
     markers.add(marker);
-    setState(() {
-    });
+    setState(() {});
   }
+
   @override
   void initState() {
     // TODO: implement initState
@@ -134,12 +138,15 @@ class _MyHomePageState extends State<MyHomePage> {
     // );
     super.initState();
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: GoogleMap(initialCameraPosition: _kinitial,mapType: MapType.terrain,onMapCreated: (GoogleMapController controller) {
-        _controller.complete(controller);
-
+      body: GoogleMap(
+        initialCameraPosition: _kinitial,
+        mapType: MapType.terrain,
+        onMapCreated: (GoogleMapController controller) {
+          _controller.complete(controller);
         },
         markers: markers,
       ),
@@ -150,21 +157,26 @@ class _MyHomePageState extends State<MyHomePage> {
       // ),
     );
   }
+
   void listenToUserLocation() {
-    StreamSubscription<Position> positionStream = Geolocator.getPositionStream(
-        locationSettings: LocationSettings(
-          distanceFilter: 10,
-          
-        )).listen((Position? position) {
-      log(position == null
-          ? 'Unknown'
-          : '${position.latitude.toString()}, ${position.longitude.toString()}');
-    });
+    StreamSubscription<Position> positionStream =
+        Geolocator.getPositionStream(
+          locationSettings: LocationSettings(distanceFilter: 10),
+        ).listen((Position? position) {
+          log(
+            position == null
+                ? 'Unknown'
+                : '${position.latitude.toString()}, ${position.longitude.toString()}',
+          );
+        });
   }
-  Future<void> _animateToPosition(LatLng position)async{
-    final GoogleMapController controller=await _controller.future;
-    await controller.animateCamera(CameraUpdate.newCameraPosition(
-        CameraPosition(target: position, zoom: 16)));
+
+  Future<void> _animateToPosition(LatLng position) async {
+    final GoogleMapController controller = await _controller.future;
+    await controller.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: position, zoom: 16),
+      ),
+    );
   }
 }
-
