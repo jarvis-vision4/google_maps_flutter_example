@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:ui' as ui;
 
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'dart:typed_data';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -73,6 +75,31 @@ class _MyHomePageState extends State<MyHomePage> {
         .asUint8List();
   }
   Set<Marker> markers={};
+  Future<Position> _determinePosition()async{
+    bool serviceEnabled;
+    LocationPermission permission;
+    serviceEnabled=await Geolocator.isLocationServiceEnabled();
+    if(!serviceEnabled){
+      return Future.error("Location services are disabled.");
+    }
+    permission=await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.denied) {
+      return Future.error('Location permissions are denied');
+    }
+    if (permission == LocationPermission.deniedForever) {
+      // Permissions are denied forever, handle appropriately.
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+
+    // When we reach here, permissions are granted and we can
+    // continue accessing the position of the device.
+    final Position currentPosition= await Geolocator.getCurrentPosition();
+    return currentPosition;
+  }
   void loadMarker()async{
     final Uint8List markerIcon = await getBytesFromAsset('assets/store.png', 50);
     final Marker marker=Marker(
@@ -123,9 +150,21 @@ class _MyHomePageState extends State<MyHomePage> {
       // ),
     );
   }
-  Future<void> _goToTheLake() async {
-    final GoogleMapController controller = await _controller.future;
-    await controller.animateCamera(CameraUpdate.newCameraPosition(_kLake));
+  void listenToUserLocation() {
+    StreamSubscription<Position> positionStream = Geolocator.getPositionStream(
+        locationSettings: LocationSettings(
+          distanceFilter: 10,
+          
+        )).listen((Position? position) {
+      log(position == null
+          ? 'Unknown'
+          : '${position.latitude.toString()}, ${position.longitude.toString()}');
+    });
+  }
+  Future<void> _animateToPosition(LatLng position)async{
+    final GoogleMapController controller=await _controller.future;
+    await controller.animateCamera(CameraUpdate.newCameraPosition(
+        CameraPosition(target: position, zoom: 16)));
   }
 }
 
