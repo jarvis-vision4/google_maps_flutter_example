@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -118,10 +119,25 @@ class _MyHomePageState extends State<MyHomePage> {
     markers.add(marker);
     setState(() {});
   }
+  void getLocationFromString()async{
+    List<Location> locations = await locationFromAddress("Yangon, Myanmar");
+    locations.forEach((location) {
+      log(location.latitude.toString());
+      log(location.longitude.toString());
+    });
+  }
+  void getAddressFromLocation()async{
+    List<Placemark> placemarks=await placemarkFromCoordinates(16.848281,96.193587);
+    placemarks.forEach((placemark) {
+      log(placemark.toJson().toString());
+    });
+  }
 
   @override
   void initState() {
     // TODO: implement initState
+    //getLocationFromString();
+    getAddressFromLocation();
     loadMarker();
     // markers.add(
     //   Marker(
